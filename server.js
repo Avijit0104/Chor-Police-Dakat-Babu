@@ -14,6 +14,8 @@ const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const CODE_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // no I or O: they look like 1 and 0
 const MAX_ROOMS = 2000;
+// How long a bot "thinks" before moving. Tests set BOT_DELAY_MS to keep it quick.
+const botDelay = () => (process.env.BOT_DELAY_MS ? Number(process.env.BOT_DELAY_MS) : 1200 + crypto.randomInt(1200));
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -48,6 +50,21 @@ function send(ws, msg) {
 
 function broadcast(entry) {
   for (const [id, ws] of entry.sockets) send(ws, { type: 'state', state: entry.room.viewFor(id) });
+  runBots(entry);
+}
+
+// If it is a bot's turn, make its move after a pause, then tell everyone.
+function runBots(entry) {
+  if (entry.botTimer || !entry.room.botMove()) return;
+  entry.botTimer = setTimeout(() => {
+    entry.botTimer = null;
+    try {
+      entry.room.botMove()?.();
+    } catch (err) {
+      console.error(err);
+    }
+    broadcast(entry);
+  }, botDelay());
 }
 
 function attach(ws, entry, player) {
@@ -116,7 +133,7 @@ function handle(ws, msg) {
     case 'leave':
       room.leave(me);
       detach(ws);
-      if (room.players.length === 0) rooms.delete(room.code);
+      if (room.humans().length === 0) rooms.delete(room.code);
       return send(ws, { type: 'left' });
     default:
       return;

@@ -42,13 +42,20 @@ Open the online `https://` link in Chrome, then tap **⋮ → Add to Home screen
 
 ## Rules
 
-1. 4 players. Every round each player gets a random chit: 👑 Babu 1200, 👮 Police 900, 🗡️ Dakat 600, 🦹 Chor 300.
+1. 4 players. Every round each player gets a random chit: 👑 Babu 1200, 👮 Police 900, 🗡️ Dakat 600, 🦹 Chor 300. Fewer than 4 of you? The host taps **Start with N bots** and bots 🤖 fill the empty seats.
 2. Everyone sees who is Babu and who is Police. Chor and Dakat stay secret: you press and hold your chit to peek at it.
 3. The Babu gets 1200 for free and picks who the Police must find: the Chor or the Dakat. Everyone sees the choice ("Babu selected Chor").
 4. The Police guesses which of the two hidden players has that chit.
 5. Right guess: Police gets 900, the caught player gets 0, the other one keeps their points.
 6. Wrong guess: Police gets 0, Chor and Dakat both keep their points.
-7. Play as many rounds as you like. When all 4 players have voted to stop, the current round finishes and the highest total wins.
+7. Play as many rounds as you like. When all the players (not the bots) have voted to stop, the current round finishes and the highest total wins.
+
+## Bots
+
+- Bots are called Bot 1, Bot 2 and Bot 3. They get chits and points like everyone else, and they can win.
+- A bot Babu or bot Police picks at random after a short pause, so bots never cheat.
+- Bots are always ready for the next round and never vote, so the people decide when the game ends.
+- **Play again** removes the bots, so more friends can join before the next game.
 
 ## Good to know
 

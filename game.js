@@ -31,7 +31,7 @@ function cleanName(raw) {
 class Room {
   constructor(code) {
     this.code = code;
-    this.players = []; // { id, token, name, connected, total, ready, stopVote }
+    this.players = []; // { id, token, name, bot, connected, total, ready, stopVote }
     this.hostId = null;
     this.phase = 'lobby'; // lobby -> choose -> guess -> result -> choose ... -> over
     this.round = null;
@@ -52,7 +52,11 @@ class Room {
   effectiveHostId() {
     const host = this.player(this.hostId);
     if (host?.connected) return host.id;
-    return (this.players.find((p) => p.connected) ?? host)?.id ?? null;
+    return (this.players.find((p) => p.connected && !p.bot) ?? host)?.id ?? null;
+  }
+
+  humans() {
+    return this.players.filter((p) => !p.bot);
   }
 
   requireHost(id) {
@@ -70,23 +74,37 @@ class Room {
     }
     if (this.phase !== 'lobby') throw new GameError('This game has already started.');
     if (this.players.length >= SEATS) throw new GameError('This room already has 4 players.');
+    const player = this.addSeat(name, false);
+    this.hostId ??= player.id;
+    return player;
+  }
+
+  addSeat(name, bot) {
     const player = {
       id: `p${this.nextId++}`,
-      token: crypto.randomUUID(),
+      token: crypto.randomUUID(), // a bot's token is never sent anywhere
       name,
-      connected: false,
+      bot,
+      connected: bot, // bots are always here, so nobody can take their seat by name
       total: 0,
       ready: false,
       stopVote: false,
     };
     this.players.push(player);
-    this.hostId ??= player.id;
     return player;
+  }
+
+  // Empty seats get Bot 1, Bot 2, ... skipping any name a player already has.
+  fillWithBots() {
+    for (let n = 1; this.players.length < SEATS; n++) {
+      const name = `Bot ${n}`;
+      if (!this.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) this.addSeat(name, true);
+    }
   }
 
   remove(id) {
     this.players = this.players.filter((p) => p.id !== id);
-    if (this.hostId === id) this.hostId = this.players[0]?.id ?? null;
+    if (this.hostId === id) this.hostId = this.humans()[0]?.id ?? null;
   }
 
   // Mid-game the seat is kept, so the player can rejoin with the same name.
@@ -106,9 +124,9 @@ class Room {
   start(byId) {
     this.requireHost(byId);
     if (this.phase !== 'lobby') throw new GameError('The game has already started.');
-    if (this.players.length < SEATS) throw new GameError('You need 4 players to start.');
     const away = this.players.find((p) => !p.connected);
     if (away) throw new GameError(`Waiting for ${away.name} to reconnect.`);
+    this.fillWithBots();
     this.newRound();
   }
 
@@ -149,14 +167,31 @@ class Room {
       const lost = (role === 'police' && !r.correct) || (r.correct && p.id === wantedId);
       r.points[p.id] = lost ? 0 : POINTS[role];
       p.total += r.points[p.id];
+      if (p.bot) p.ready = true;
     }
     this.history.push({ number: r.number, roles: r.roles, points: r.points });
     this.phase = 'result';
     if (this.everyone('stopVote')) this.finish();
   }
 
+  // Bots never vote, so only the people playing decide.
   everyone(flag) {
-    return this.players.every((p) => p[flag]);
+    return this.humans().every((p) => p[flag]);
+  }
+
+  // The move a bot has to make right now, if any. Bots pick at random, so they
+  // know no more than a person would. The server runs this after a short pause.
+  botMove() {
+    if (this.phase === 'choose') {
+      const babu = this.player(this.holderOf('babu'));
+      if (babu.bot) return () => this.choose(babu.id, crypto.randomInt(2) ? 'chor' : 'dakat');
+    }
+    if (this.phase === 'guess') {
+      const police = this.player(this.holderOf('police'));
+      const suspects = [this.holderOf('chor'), this.holderOf('dakat')];
+      if (police.bot) return () => this.guess(police.id, suspects[crypto.randomInt(2)]);
+    }
+    return null;
   }
 
   setReady(byId, value) {
@@ -182,6 +217,8 @@ class Room {
   restart(byId) {
     this.requireHost(byId);
     if (this.phase !== 'over') throw new GameError('The game is still going.');
+    // Bots leave so new friends can join; empty seats are filled again at start.
+    this.players = this.humans();
     for (const p of this.players) Object.assign(p, { total: 0, ready: false, stopVote: false });
     this.round = null;
     this.history = [];
@@ -211,7 +248,7 @@ class Room {
       phase: this.phase,
       you: id,
       hostId: this.effectiveHostId(),
-      players: this.players.map(({ id, name, connected, total, ready, stopVote }) => ({ id, name, connected, total, ready, stopVote })),
+      players: this.players.map(({ id, name, bot, connected, total, ready, stopVote }) => ({ id, name, bot, connected, total, ready, stopVote })),
       round,
       history: this.history,
       standings: this.standings,

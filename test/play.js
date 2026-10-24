@@ -32,9 +32,26 @@ class Bot {
         if (msg.type === 'joined') Object.assign(this, { code: msg.code, token: msg.token });
         if (msg.type === 'state') this.state = msg.state;
         if (msg.type === 'error') this.errors.push(msg.message);
+        if (msg.type === 'state') this.onState?.();
         this.waiters = this.waiters.filter((check) => !check());
       };
     });
+  }
+
+  // Makes this player's move whenever it is their turn, picking at random.
+  autoplay() {
+    let done = null;
+    this.onState = () => {
+      const { phase, round: r, you } = this.state;
+      const key = `${phase}:${r?.number}`;
+      if (key === done) return;
+      if (phase === 'choose' && r.babuId === you) this.send({ type: 'choose', target: Math.random() < 0.5 ? 'chor' : 'dakat' });
+      else if (phase === 'guess' && r.policeId === you) {
+        const suspects = this.state.players.filter((p) => p.id !== r.babuId && p.id !== r.policeId);
+        this.send({ type: 'guess', playerId: suspects[Math.floor(Math.random() * 2)].id });
+      } else return;
+      done = key;
+    };
   }
 
   send(msg) {
@@ -226,11 +243,94 @@ async function main() {
   stranger.send({ type: 'join', code, name: 'Esha' });
   await stranger.until((x) => x.state?.phase === 'lobby', 'new player joined');
 
-  console.log(`All checks passed. Final scores: ${standings.map((s) => `${s.name} ${s.total}`).join(', ')}`);
+  console.log(`4 players: ${standings.map((s) => `${s.name} ${s.total}`).join(', ')}`);
+
+  // ----- fewer than 4 people: bots fill the empty seats -----
+  await botGame(['Ira']);
+  await botGame(['Bot 1', 'Kabir']); // a person called "Bot 1" pushes the bots to Bot 2 and Bot 3
+  console.log('All checks passed.');
+}
+
+// Points every player should get for a finished round, worked out from the revealed roles.
+function expectedPoints(r) {
+  const wanted = Object.keys(r.roles).find((id) => r.roles[id] === r.target);
+  const correct = r.guessId === wanted;
+  assert.equal(r.correct, correct);
+  const want = {};
+  for (const [id, role] of Object.entries(r.roles)) {
+    if (role === 'police') want[id] = correct ? 900 : 0;
+    else want[id] = correct && id === wanted ? 0 : POINTS[role];
+  }
+  return want;
+}
+
+async function botGame(names) {
+  const people = await Promise.all(names.map((n) => new Bot(n).open()));
+  const [host, ...rest] = people;
+  host.send({ type: 'create', name: host.name });
+  await host.until((x) => x.state?.phase === 'lobby', 'bot game lobby');
+  for (const p of rest) {
+    p.send({ type: 'join', code: host.code, name: p.name });
+    await p.until((x) => x.state?.phase === 'lobby', `${p.name} in lobby`);
+  }
+  await host.until((x) => x.state.players.length === names.length, 'everyone joined');
+  for (const p of people) p.autoplay();
+  host.send({ type: 'start' });
+  await all(people, (x) => x.state.phase !== 'lobby', 'bot game started');
+
+  const players = host.state.players;
+  const taken = names.map((n) => n.toLowerCase());
+  const botNames = ['Bot 1', 'Bot 2', 'Bot 3', 'Bot 4'].filter((n) => !taken.includes(n.toLowerCase())).slice(0, 4 - names.length);
+  assert.equal(players.length, 4);
+  assert.deepEqual(players.filter((p) => p.bot).map((p) => p.name), botNames, 'empty seats get bots');
+  assert.ok(players.every((p) => p.connected));
+  assert.equal(host.state.hostId, host.id, 'a bot never becomes host');
+
+  // A bot's seat can't be taken by joining with its name.
+  const stranger = await new Bot('Esha').open();
+  await stranger.expectError({ type: 'join', code: host.code, name: botNames[0].toUpperCase() }, /already here/);
+  stranger.ws.close();
+
+  const totals = {};
+  const rounds = 4;
+  for (let n = 1; n <= rounds; n++) {
+    await all(people, (x) => ['result', 'over'].includes(x.state.phase) && x.state.round.number === n, `bot game result ${n}`);
+    const r = host.state.round;
+    assert.ok(['chor', 'dakat'].includes(r.target));
+    const want = expectedPoints(r);
+    for (const p of host.state.players) {
+      totals[p.id] = (totals[p.id] ?? 0) + want[p.id];
+      assert.equal(r.points[p.id], want[p.id], `bot game round ${n}: ${p.name} points`);
+      assert.equal(p.total, totals[p.id]);
+      if (p.bot) assert.ok(p.ready, 'bots are ready for the next round straight away');
+    }
+    if (n < rounds) {
+      for (const p of people) p.send({ type: 'ready', value: true });
+    } else {
+      // Only people vote to stop; the bots don't hold the game up.
+      for (const p of people) p.send({ type: 'stop', value: true });
+    }
+  }
+  await all(people, (x) => x.state.phase === 'over', 'bot game over');
+  assert.equal(host.state.history.length, rounds);
+  assert.equal(host.state.standings.length, 4);
+
+  // Play again: the bots leave so new friends can join.
+  host.send({ type: 'restart' });
+  await all(people, (x) => x.state.phase === 'lobby', 'bot game back in lobby');
+  assert.deepEqual(host.state.players.map((p) => p.name), names);
+
+  // Once every person has left, the room is gone.
+  for (const p of people) p.send({ type: 'leave' });
+  await all(people, (x) => x.events.includes('left'), 'everyone left');
+  const late = await new Bot('Late').open();
+  await late.expectError({ type: 'join', code: host.code, name: 'Late' }, /No room/);
+  for (const p of [...people, late]) p.ws.close();
+  console.log(`${names.join(' + ')} + ${botNames.join(' + ')}: ${rounds} rounds ok`);
 }
 
 const server = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], {
-  env: { ...process.env, PORT: String(PORT) },
+  env: { ...process.env, PORT: String(PORT), BOT_DELAY_MS: '20' },
   stdio: ['ignore', 'pipe', 'inherit'],
 });
 server.stdout.once('data', () => {

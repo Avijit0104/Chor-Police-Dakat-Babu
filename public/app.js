@@ -191,6 +191,8 @@ function initial(name) {
   return esc((Array.from(name)[0] ?? '?').toUpperCase());
 }
 
+const avatar = (p) => `<span class="avatar">${p.bot ? '🤖' : initial(p.name)}</span>`;
+
 const dots = () => '<span class="dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span>';
 
 const badge = (role) => `<span class="badge ${role}">${ROLE[role].icon} ${ROLE[role].name}</span>`;
@@ -259,12 +261,14 @@ function lobbyScreen(st) {
   const isHost = st.hostId === st.you;
   const missing = 4 - st.players.length;
   const away = st.players.find((p) => !p.connected);
+  const bots = `${missing} bot${missing > 1 ? 's' : ''}`;
   let footer;
-  if (missing > 0) footer = `<p class="hint">Waiting for ${missing} more player${missing > 1 ? 's' : ''}${dots()}</p>`;
-  else if (away) footer = `<p class="hint">Waiting for ${esc(away.name)} to come back${dots()}</p>`;
+  if (away) footer = `<p class="hint">Waiting for ${esc(away.name)} to come back${dots()}</p>`;
+  else if (isHost && missing) footer = `<p class="hint">Wait for friends, or start now and ${bots} will play the empty seat${missing > 1 ? 's' : ''}.</p>`;
   else if (isHost) footer = '<p class="hint">Everyone is here!</p>';
   else footer = `<p class="hint">Waiting for ${nameOf(st, st.hostId)} to start${dots()}</p>`;
-  if (isHost) footer += `<button class="btn primary big" data-action="start"${missing || away ? ' disabled' : ''}>Start game</button>`;
+  const label = missing ? `Start with ${bots} 🤖` : 'Start game';
+  if (isHost) footer += `<button class="btn primary big" data-action="start"${away ? ' disabled' : ''}>${label}</button>`;
   const seats = [0, 1, 2, 3].map((i) => seat(st, st.players[i], isHost)).join('');
   return `
   <main class="screen lobby">
@@ -282,7 +286,7 @@ function lobbyScreen(st) {
 }
 
 function seat(st, p, isHost) {
-  if (!p) return '<li class="seat empty"><span class="avatar">?</span><span class="who">Empty seat</span></li>';
+  if (!p) return '<li class="seat empty"><span class="avatar">?</span><span class="who">Empty seat · a bot plays if nobody joins</span></li>';
   const tags = [];
   if (p.id === st.you) tags.push('<span class="you">you</span>');
   if (p.id === st.hostId) tags.push('<span class="tag">host</span>');
@@ -290,7 +294,7 @@ function seat(st, p, isHost) {
   const remove = isHost && !p.connected ? `<button class="btn small" data-action="kick" data-id="${p.id}">Remove</button>` : '';
   return `
   <li class="seat${p.id === st.you ? ' me' : ''}${p.connected ? '' : ' away'}">
-    <span class="avatar">${initial(p.name)}</span>
+    ${avatar(p)}
     <span class="who"><span class="name">${esc(p.name)}</span>${tags.join('')}</span>
     ${remove}
   </li>`;
@@ -327,7 +331,7 @@ function boardRow(st, p) {
   const pts = revealed ? r.points[p.id] : null;
   return `
   <li class="row${p.id === st.you ? ' me' : ''}${p.connected ? '' : ' away'}">
-    <span class="avatar">${initial(p.name)}</span>
+    ${avatar(p)}
     <span class="who"><span class="name">${esc(p.name)}</span>${tags.join('')}</span>
     ${role ? badge(role) : '<span class="badge">?</span>'}
     <span class="score">${pts === null ? '' : `<span class="delta${pts ? '' : ' zero'}">+${pts}</span>`}${p.total}</span>
@@ -422,9 +426,11 @@ function myChit(st) {
 
 function stopButton(st) {
   const me = st.players.find((p) => p.id === st.you);
+  // Bots don't vote; the people playing decide when to stop.
+  const people = st.players.filter((p) => !p.bot).length;
   const votes = st.players.filter((p) => p.stopVote).length;
-  const note = votes === st.players.length ? '<p class="hint">Everyone voted to stop. The game ends after this round.</p>' : '';
-  const label = me.stopVote ? `✋ You voted to stop (${votes}/4) · tap to undo` : `✋ Vote to stop the game (${votes}/4)`;
+  const note = votes === people ? '<p class="hint">Everyone voted to stop. The game ends after this round.</p>' : '';
+  const label = me.stopVote ? `✋ You voted to stop (${votes}/${people}) · tap to undo` : `✋ Vote to stop the game (${votes}/${people})`;
   return `${note}<button class="btn ghost${me.stopVote ? ' on' : ''}" data-action="stop" data-value="${!me.stopVote}">${label}</button>`;
 }
 
@@ -485,13 +491,14 @@ function overScreen(st) {
 function rules() {
   return details('rules', 'How to play', `
     <ol>
-      <li>4 players. Every round each player gets a random chit: 👑 Babu 1200 · 👮 Police 900 · 🗡️ Dakat 600 · 🦹 Chor 300.</li>
+      <li>4 players. Fewer than 4 of you? Bots 🤖 fill the empty seats.</li>
+      <li>Every round each player gets a random chit: 👑 Babu 1200 · 👮 Police 900 · 🗡️ Dakat 600 · 🦹 Chor 300.</li>
       <li>Everyone sees who is Babu and who is Police. Chor and Dakat stay secret.</li>
       <li>The Babu gets 1200 for free and picks who the Police must find: the Chor or the Dakat.</li>
       <li>The Police guesses which of the two hidden players has that chit.</li>
       <li>Right guess: Police gets 900, the caught player gets 0, the other keeps their points.</li>
       <li>Wrong guess: Police gets 0, Chor and Dakat both keep their points.</li>
-      <li>Play as many rounds as you like. When all 4 vote to stop, the highest total wins.</li>
+      <li>Play as many rounds as you like. When all the players (not the bots) vote to stop, the highest total wins.</li>
     </ol>`);
 }
 
