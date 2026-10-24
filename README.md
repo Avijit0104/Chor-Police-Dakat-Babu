@@ -2,6 +2,8 @@
 
 A 4-player chit game for friends. Everyone plays on their own phone in the browser, and on Android it installs like a normal app.
 
+**Play now: https://chor-police-dakat-babu.onrender.com**. If nobody has played for a while, the first load can take up to a minute while the server wakes up.
+
 ## Play on the same Wi-Fi (works right now, free)
 
 1. On your PC, open a terminal in this folder and run:

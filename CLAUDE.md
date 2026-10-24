@@ -45,7 +45,7 @@ It has to cost nothing to build, host and play.
   - Trade-off: there is no offline phone-hosts-phone mode, because a browser can't run a server. For no-internet play, a PC on the same Wi-Fi or hotspot runs the server.
 - **The server is authoritative.** Who holds Chor and Dakat is never sent to other phones until the round ends, so inspecting the page can't reveal it.
 - **No peer-to-peer.** It often fails on mobile networks.
-- **Hosting plan: Render free plan** (`render.yaml`).
+- **Hosting: Render free plan**, live at `https://chor-police-dakat-babu.onrender.com` (web service `Chor-Police-Dakat-Babu`, ID `srv-dbe6mt9srm7s73b3esr0`, in the owner's Render workspace). It was set up as a plain Web Service connected to the GitHub repo, not through `render.yaml`, so settings changed in the Render dashboard win over that file. Every push to `main` redeploys automatically, which restarts the server and drops any rooms in progress.
   - Catches: it sleeps after 15 minutes idle and takes about a minute to wake. Rooms live in memory and are lost when it sleeps or restarts.
   - The client fetches `/healthz` every 4 minutes during a game so it doesn't sleep mid-game.
   - Quick alternative: `cloudflared tunnel --url http://localhost:3000` gives a temporary `https` link while the PC is on.
@@ -146,14 +146,14 @@ As of 2026-10-24.
 - The full game as described above.
 - `npm test` passes.
 - A 4-tab browser playthrough at phone size checked: lobby, roles, peek, wrong-guess scoring, reload rejoin, stop vote, game over and score sheet.
+- On GitHub and deployed to Render. A bot script played one full round against the live URL over `wss://`: pages load, scoring is right, and roles stay hidden mid-round.
 
 **Not done or not verified yet:**
-- Playing on real phones over Wi-Fi, including the Windows Firewall prompt.
-- Deploying to Render. The code is on GitHub now; this needs the owner's Render account.
-- Installing on Android.
+- Playing on real phones, over Wi-Fi or the live link.
+- Installing on Android from the live link.
 - iPhone.
 
-**Next:** the owner tests on phones over Wi-Fi, then deploys to Render.
+**Next:** the owner plays with friends on real phones using the live link, and installs it on Android.
 
 **Ideas not built:** sounds, Bengali/Hindi text, avatars, chat, a round timer, rooms that survive a server restart.
 
@@ -163,3 +163,4 @@ As of 2026-10-24.
 - **2026-10-24:** Added this CLAUDE.md.
 - **2026-10-24:** Reinstalled dependencies in `D:\Avijit\CPDB`; `npm test` passes there. Recreated `.claude/launch.json`. Server started for the first phone test at `http://192.168.1.95:3000`.
 - **2026-10-24:** Made the folder a git repository and pushed it to `github.com/Avijit0104/Chor-Police-Dakat-Babu`. Noted that the PC's Wi-Fi is now also on, at `192.168.1.91`.
+- **2026-10-24:** Deployed to Render at `https://chor-police-dakat-babu.onrender.com` and checked it with a live bot round. Added the play link to the README.
