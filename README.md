@@ -1,75 +1,89 @@
 # CPDB: Chor Police Dakat Babu
 
-A 4-player chit game for friends. Everyone plays on their own phone in the browser, and on Android it installs like a normal app.
+The classic chit game **Chor, Police, Dakat, Babu**, made for phones. Four players, everyone on their own phone, no paper chits needed. Short of friends? Bots fill the empty seats.
 
-**Play now: https://chor-police-dakat-babu.onrender.com**. If nobody has played for a while, the first load can take up to a minute while the server wakes up.
+### ▶ Play now: **https://chor-police-dakat-babu.onrender.com**
 
-## Play on the same Wi-Fi (works right now, free)
+Free, nothing to download, works in any phone browser. If nobody has played for a while, the first load can take up to a minute while the server wakes up.
 
-1. On your PC, open a terminal in this folder and run:
+<p align="center">
+  <img src="docs/screenshots/1-home.png" width="200" alt="Start screen">
+  <img src="docs/screenshots/2-lobby.png" width="200" alt="Lobby with a room code and two empty seats for bots">
+  <img src="docs/screenshots/3-shuffle.png" width="200" alt="Shuffling the chits before a round">
+  <img src="docs/screenshots/4-babu.png" width="200" alt="The Babu choosing Chor or Dakat">
+</p>
+<p align="center">
+  <img src="docs/screenshots/5-investigating.png" width="200" alt="Everyone watching the Police investigate">
+  <img src="docs/screenshots/6-chit.png" width="200" alt="Peeking at your secret chit">
+  <img src="docs/screenshots/7-result.png" width="200" alt="Round result: the Police caught the Dakat">
+  <img src="docs/screenshots/8-over.png" width="200" alt="Game over with the final standings">
+</p>
 
-   ```bash
-   npm install
-   ```
+## Start a game
 
-   (first time only), then:
+1. Open the link and type your name.
+2. One player taps **Create a room** and gets a 4-letter room code.
+3. Everyone else types that code and taps **Join**. You can also tap **Share invite link** to send it on WhatsApp.
+4. The host taps **Start game**. With fewer than 4 people the button says **Start with 2 bots** (or 1, or 3), and bots take the empty seats.
 
-   ```bash
-   npm start
-   ```
+## The chits
 
-2. It prints an address like `http://192.168.1.91:3000`. Friends on the same Wi-Fi open that address in Chrome on their phones.
-3. The first time, Windows may ask whether Node.js can use the network. Tick **Private networks** and click **Allow**, or phones won't be able to connect.
-4. One player taps **Create a room**. The others type the 4-letter code and tap **Join**, or use the **Share invite link** button.
+| Chit | Points | Who knows |
+|---|---|---|
+| 👑 Babu | 1200 | Everyone |
+| 👮 Police | 900 | Everyone |
+| 🗡️ Dakat | 600 | Only the player holding it |
+| 🦹 Chor | 300 | Only the player holding it |
 
-The PC has to stay on while you play. You don't need internet for this, only the same Wi-Fi (or the PC's hotspot).
+## How a round goes
 
-## Play online from anywhere (free)
+1. **Shuffle.** The chits are shuffled and everyone gets a new one at random.
+2. **The Babu chooses.** The Babu gets 1200 points for free and picks who the Police must find: the Chor or the Dakat. Everyone sees the choice, like "Babu selected Chor".
+3. **The Police investigates.** The Police picks which of the two hidden players has that chit. Everyone else watches the 🔍 while the Police decides.
+4. **The result.**
+   - **Right guess:** the Police gets 900, the caught player gets 0, and the other hidden player keeps their points.
+   - **Wrong guess:** the Police gets 0, and the Chor and the Dakat both keep their points.
+5. When everyone taps **Next round**, the next shuffle starts. Points add up round after round.
 
-Host it on Render's free plan:
+**Your secret chit:** if you're the Chor or the Dakat, your chit stays covered so nobody can read it off your screen. Press and hold it to peek.
 
-1. Put this folder in a new GitHub repository.
-2. Sign in at [render.com](https://render.com) with GitHub, choose **New → Blueprint** and pick the repository. `render.yaml` already holds the settings (free plan, `npm install`, `npm start`).
-3. You get a link like `https://cpdb-xxxx.onrender.com`. Send it to your friends; every group makes its own room.
+## Ending the game
 
-The catch with the free plan: when nobody has used it for 15 minutes the server goes to sleep, so the first person to open it waits up to a minute. A sleeping server also forgets its rooms, which only matters between games, because a game in progress keeps it awake.
+Play as many rounds as you like. Anyone can tap **Vote to stop the game** at any time, and tap again to undo. When every player has voted, the current round finishes and the game ends. The highest total wins, and players with the same score share the place. The score sheet shows every round.
 
-Need a link for just tonight? Run `npm start` and then Cloudflare's free quick tunnel (`cloudflared tunnel --url http://localhost:3000`, no account needed). It gives a public `https://…trycloudflare.com` link that works while your PC is on.
+The host can tap **Play again** to start a new game with the same room.
 
-## Install it on Android
+## Playing with bots
 
-Open the online `https://` link in Chrome, then tap **⋮ → Add to Home screen** (or **Install app**), or tap the **Install CPDB on this phone** button on the start screen. It gets its own icon and opens full screen. Installing needs `https`, so it isn't offered on the plain Wi-Fi address.
-
-## Rules
-
-1. 4 players. Every round each player gets a random chit: 👑 Babu 1200, 👮 Police 900, 🗡️ Dakat 600, 🦹 Chor 300. Fewer than 4 of you? The host taps **Start with N bots** and bots 🤖 fill the empty seats.
-2. Everyone sees who is Babu and who is Police. Chor and Dakat stay secret: you press and hold your chit to peek at it.
-3. The Babu gets 1200 for free and picks who the Police must find: the Chor or the Dakat. Everyone sees the choice ("Babu selected Chor").
-4. The Police guesses which of the two hidden players has that chit.
-5. Right guess: Police gets 900, the caught player gets 0, the other one keeps their points.
-6. Wrong guess: Police gets 0, Chor and Dakat both keep their points.
-7. Play as many rounds as you like. When all the players (not the bots) have voted to stop, the current round finishes and the highest total wins.
-
-## Bots
-
-- Bots are called Bot 1, Bot 2 and Bot 3. They get chits and points like everyone else, and they can win.
+- With 1, 2 or 3 people, bots called **Bot 1**, **Bot 2** and **Bot 3** 🤖 fill the empty seats.
+- Bots get chits and points like everyone else, and they can win.
 - A bot Babu or bot Police picks at random after a short pause, so bots never cheat.
 - Bots are always ready for the next round and never vote, so the people decide when the game ends.
 - **Play again** removes the bots, so more friends can join before the next game.
 
+## Add it to your home screen (Android)
+
+Open the link in Chrome and tap **Install CPDB on this phone** on the start screen, or **⋮ → Add to Home screen**. It gets its own icon and opens full screen like a normal app.
+
 ## Good to know
 
-- If a phone locks or someone reloads, the game reconnects them to the same seat.
-- Someone switching phones can join the same room code with the same name and gets their seat back.
-- In the lobby, the host can remove a player who went offline to free the seat.
-- The server never sends other players' Chor or Dakat chits to a phone until the round is over, so nobody can cheat by inspecting the page.
+- **Phone locked or page reloaded?** The game reconnects you to your seat by itself.
+- **Switched phones?** Join the same room code with the same name and you get your seat back, points and all.
+- **Someone dropped out before the start?** In the lobby, the host can remove a player who went offline.
+- **No cheating:** nobody's phone is told who the Chor and the Dakat are until the round is over, so even inspecting the page won't reveal them.
+- The screen stays on while you're in a room, and your phone buzzes when it's your turn.
 
 ## Project files
 
 | File | What it does |
 |---|---|
 | `server.js` | Web server and rooms (WebSockets) |
-| `game.js` | Game rules and scoring |
+| `game.js` | Game rules, scoring and bots |
 | `public/` | The phone app: page, styles, script, icons |
-| `test/play.js` | 4 bot players play a scripted game and check the rules (`npm test`) |
+| `test/play.js` | Test players and bots play scripted games and check the rules (`npm test`) |
 | `scripts/make-icons.ps1` | Redraws the app icons |
+| `scripts/screenshots.js` | Retakes the screenshots above in headless Chrome |
+
+---
+
+<p align="center">Created by <b>Avijit Bose</b></p>
