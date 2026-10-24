@@ -1,0 +1,17 @@
+{
+  "name": "cpdb",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Chor Police Dakat Babu - a 4-player chit game for friends",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/play.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

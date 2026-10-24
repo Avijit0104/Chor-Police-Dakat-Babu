@@ -1,0 +1,9 @@
+# One-click setup for Render's free plan: New > Blueprint > pick this repository.
+services:
+  - type: web
+    name: cpdb
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
