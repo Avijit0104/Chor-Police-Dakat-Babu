@@ -8,7 +8,7 @@ const ROLE = {
 };
 
 // How long the "shuffling the chits" screen shows before each round.
-const SHUFFLE_MS = 500;
+const SHUFFLE_MS = 800;
 
 const app = document.getElementById('app');
 const banner = document.getElementById('banner');

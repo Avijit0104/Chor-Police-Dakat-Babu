@@ -132,7 +132,7 @@ It has to cost nothing to build, host and play.
   - The secret chit is press-and-hold (pointer events, `touch-action: none`).
   - A wake lock keeps the screen on while in a room.
   - The phone vibrates on your turn, but only after the player has tapped the page once (a Chrome rule).
-- **Shuffle screen:** when a round starts (the phase goes from `lobby` or `result` to `choose`), the client shows four face-down chits swapping places for `SHUFFLE_MS` (500 ms) before the round screen. It is client-only, so a reload mid-round skips it.
+- **Shuffle screen:** when a round starts (the phase goes from `lobby` or `result` to `choose`), the client shows four face-down chits swapping places for `SHUFFLE_MS` (800 ms; the owner changed it from 500) before the round screen. It is client-only, so a reload mid-round skips it.
 - **Investigating screen:** during `guess`, everyone except the Police sees a 🔍 sweeping between the two suspects' names with "👮 X is investigating…". Your own name shows as "You".
 - **Bots on screen:** a 🤖 avatar instead of the initial. The lobby's start button reads "Start with N bots 🤖" when seats are empty. The stop button counts only people, e.g. `(1/2)`.
 - **Role emoji:** Babu 👑, Police 👮, Dakat 🗡️, Chor 🦹. Don't use 🥷: it shows as an empty box on Windows 10 and older Android.
