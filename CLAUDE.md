@@ -66,7 +66,7 @@ It has to cost nothing to build, host and play.
 |---|---|
 | `game.js` | `Room` class: all rules, scoring, bots' moves (`botMove()`) and per-player views. No networking or timers. |
 | `server.js` | Static file server for `public/`, WebSocket server at `/ws`, rooms map, reconnects, heartbeat, idle-room cleanup, `/healthz`, and the timer that runs bot moves. |
-| `public/index.html` | Page shell. |
+| `public/index.html` | Page shell, including the "Created by Avijit Bose" credit under `#app`, so it shows on every screen. |
 | `public/style.css` | All styles. Dark theme, mobile-first, max width 480px. |
 | `public/app.js` | The whole client: connection, rendering, actions, peek, wake lock, install button. |
 | `public/manifest.webmanifest`, `public/sw.js` | Make it installable. The service worker is network-first with cache `cpdb-v1`; bump the name if caching changes. |
@@ -176,3 +176,4 @@ As of 2026-10-24.
 - **2026-10-24:** Made the folder a git repository and pushed it to `github.com/Avijit0104/Chor-Police-Dakat-Babu`. Noted that the PC's Wi-Fi is now also on, at `192.168.1.91`.
 - **2026-10-24:** Deployed to Render at `https://chor-police-dakat-babu.onrender.com` and checked it with a live bot round. Added the play link to the README.
 - **2026-10-24:** Added bots: the host can start with 1–3 people and bots fill the empty seats. Tests and docs updated. Noticed Claude in Chrome on this PC could not open `localhost`/`127.0.0.1` pages (connection refused) but could open the LAN address, e.g. `http://192.168.1.95:3001`.
+- **2026-10-24:** Added a small "Created by Avijit Bose" credit at the bottom of every screen, at the owner's request.

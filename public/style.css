@@ -38,7 +38,18 @@ body {
 #app {
   max-width: 480px;
   margin: 0 auto;
-  padding: calc(env(safe-area-inset-top) + 10px) 16px calc(env(safe-area-inset-bottom) + 28px);
+  padding: calc(env(safe-area-inset-top) + 10px) 16px 20px;
+}
+
+/* Shown under every screen: it sits outside #app, which render() redraws. */
+.credit {
+  padding: 0 16px calc(env(safe-area-inset-bottom) + 18px);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: var(--muted);
+  opacity: 0.7;
 }
 
 .screen { display: flex; flex-direction: column; gap: 14px; }
