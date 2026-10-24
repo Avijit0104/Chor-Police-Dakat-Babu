@@ -289,6 +289,56 @@ input:focus { outline: 2px solid var(--police); outline-offset: 1px; }
 
 .suspect { min-height: 66px; font-size: 18px; overflow-wrap: anywhere; border-color: var(--police); background: var(--police-soft); }
 
+/* Shuffle screen: four face-down chits swap places with their neighbours. */
+.deck { display: flex; justify-content: center; gap: 10px; padding: 10px 0 4px; }
+.deck span {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 72px;
+  font-size: 24px;
+  font-weight: 900;
+  color: #6b5a47;
+  background: var(--paper);
+  border-top: 6px solid;
+  border-radius: 10px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+  animation: shuffle 0.25s ease-in-out infinite alternate;
+}
+.deck .chor { border-color: var(--chor); --dx: 62px; --rot: 8deg; }
+.deck .police { border-color: var(--police); --dx: -62px; --rot: -8deg; }
+.deck .dakat { border-color: var(--dakat); --dx: 62px; --rot: 6deg; }
+.deck .babu { border-color: var(--babu); --dx: -62px; --rot: -6deg; }
+@keyframes shuffle {
+  to { transform: translate(var(--dx), -10px) rotate(var(--rot)); }
+}
+
+/* Investigating: the magnifier sweeps between the two suspects, lighting each in turn. */
+.magnifier { font-size: 44px; line-height: 1.1; animation: search 1.6s ease-in-out infinite; }
+@keyframes search {
+  0%, 100% { transform: translateX(-48px) rotate(-12deg); }
+  50% { transform: translateX(48px) rotate(12deg); }
+}
+.suspects { display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; }
+.suspect-chip {
+  max-width: 40%;
+  padding: 8px 14px;
+  overflow: hidden;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-2);
+  animation: scan 1.6s ease-in-out infinite;
+}
+.suspect-chip:last-child { animation-delay: -0.8s; }
+.or { color: var(--muted); font-size: 14px; }
+@keyframes scan {
+  0%, 100% { border-color: var(--police); background: var(--police-soft); transform: scale(1.06); }
+  35%, 65% { border-color: var(--line); background: var(--bg-2); transform: none; }
+}
+
 .good { color: var(--good); }
 .bad { color: var(--bad); }
 

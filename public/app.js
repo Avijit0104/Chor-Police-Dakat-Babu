@@ -7,6 +7,9 @@ const ROLE = {
   chor: { name: 'Chor', icon: '🦹', points: 300 },
 };
 
+// How long the "shuffling the chits" screen shows before each round.
+const SHUFFLE_MS = 500;
+
 const app = document.getElementById('app');
 const banner = document.getElementById('banner');
 const toastBox = document.getElementById('toast');
@@ -23,6 +26,7 @@ const S = {
   stageKey: null,
   turnKey: null,
   peeking: false,
+  shuffleUntil: 0, // time the shuffle screen ends
   replaced: false,
   open: {}, // which <details> sections are expanded, so re-renders keep them
   installPrompt: null,
@@ -109,7 +113,15 @@ function receive(msg) {
       break;
     case 'state':
       if (!S.session) return; // a late update for a room we just left
-      S.state = msg.state;
+      {
+        const before = S.state?.phase;
+        S.state = msg.state;
+        // A round just started (not a reload mid-round): shuffle the chits first.
+        if (S.state.phase === 'choose' && (before === 'lobby' || before === 'result')) {
+          S.shuffleUntil = Date.now() + SHUFFLE_MS;
+          setTimeout(render, SHUFFLE_MS);
+        }
+      }
       nudgeIfMyTurn();
       break;
     case 'expired':
@@ -163,6 +175,7 @@ function render() {
   else if (!st) S.session ? show('loading', loadingScreen()) : showHome();
   else if (st.phase === 'lobby') show('lobby', lobbyScreen(st));
   else if (st.phase === 'over') show('over', overScreen(st));
+  else if (st.phase === 'choose' && Date.now() < S.shuffleUntil) show('shuffle', shuffleScreen(st));
   else show('game', gameScreen(st));
   keepAwake();
 }
@@ -300,6 +313,20 @@ function seat(st, p, isHost) {
   </li>`;
 }
 
+// Four face-down chits swapping places while the server's deal is "decided".
+function shuffleScreen(st) {
+  const chits = ['chor', 'police', 'dakat', 'babu'].map((role) => `<span class="${role}">?</span>`).join('');
+  return `
+  <main class="screen game">
+    ${topbar(`Round ${st.round.number}`, st)}
+    <section class="stage shuffle">
+      <div class="deck" aria-hidden="true">${chits}</div>
+      <h2>Shuffling the chits${dots()}</h2>
+      <p>Everyone gets a new role.</p>
+    </section>
+  </main>`;
+}
+
 function gameScreen(st) {
   const r = st.round;
   const key = `${st.phase}:${r.number}`;
@@ -373,13 +400,17 @@ function stage(st) {
     const head = `<p class="announce">Babu selected <span class="${r.target}">${target.icon} ${target.name}</span></p>`;
     if (st.you === r.policeId) {
       return `${head}
-        <h2>Who is the ${target.name}?</h2>
+        <h2>🔍 Investigate: who is the ${target.name}?</h2>
         <div class="choices">${suspects.map((p) => `<button class="btn suspect" data-action="guess" data-id="${p.id}">${esc(p.name)}</button>`).join('')}</div>
         <p class="hint">Right guess: you get 900. Wrong guess: you get 0.</p>`;
     }
+    // Everyone else watches the Police investigate the two hidden players.
+    const chip = (p) => `<span class="suspect-chip">${p.id === st.you ? 'You' : esc(p.name)}</span>`;
     return `${head}
-      <h2>👮 ${police} is guessing${dots()}</h2>
-      <p>Is it <b>${esc(suspects[0].name)}</b> or <b>${esc(suspects[1].name)}</b>?</p>`;
+      <div class="magnifier" aria-hidden="true">🔍</div>
+      <h2>👮 ${police} is investigating${dots()}</h2>
+      <div class="suspects">${chip(suspects[0])}<span class="or">or</span>${chip(suspects[1])}</div>
+      <p>Who is the ${target.name}?</p>`;
   }
 
   const res = resultText(st);

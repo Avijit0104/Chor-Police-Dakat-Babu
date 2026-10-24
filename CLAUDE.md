@@ -132,6 +132,8 @@ It has to cost nothing to build, host and play.
   - The secret chit is press-and-hold (pointer events, `touch-action: none`).
   - A wake lock keeps the screen on while in a room.
   - The phone vibrates on your turn, but only after the player has tapped the page once (a Chrome rule).
+- **Shuffle screen:** when a round starts (the phase goes from `lobby` or `result` to `choose`), the client shows four face-down chits swapping places for `SHUFFLE_MS` (500 ms) before the round screen. It is client-only, so a reload mid-round skips it.
+- **Investigating screen:** during `guess`, everyone except the Police sees a 🔍 sweeping between the two suspects' names with "👮 X is investigating…". Your own name shows as "You".
 - **Bots on screen:** a 🤖 avatar instead of the initial. The lobby's start button reads "Start with N bots 🤖" when seats are empty. The stop button counts only people, e.g. `(1/2)`.
 - **Role emoji:** Babu 👑, Police 👮, Dakat 🗡️, Chor 🦹. Don't use 🥷: it shows as an empty box on Windows 10 and older Android.
 - **Role colors:** Babu `#f6b93b`, Police `#4f8cff`, Dakat `#ff5c63`, Chor `#a07cff`. Background `#13111c`.
@@ -177,3 +179,4 @@ As of 2026-10-24.
 - **2026-10-24:** Deployed to Render at `https://chor-police-dakat-babu.onrender.com` and checked it with a live bot round. Added the play link to the README.
 - **2026-10-24:** Added bots: the host can start with 1–3 people and bots fill the empty seats. Tests and docs updated. Noticed Claude in Chrome on this PC could not open `localhost`/`127.0.0.1` pages (connection refused) but could open the LAN address, e.g. `http://192.168.1.95:3001`.
 - **2026-10-24:** Added a small "Created by Avijit Bose" credit at the bottom of every screen, at the owner's request.
+- **2026-10-24:** Added a half-second shuffle screen before each round and a "Police is investigating" screen for the other players. Pushed on the owner's request before the browser check of these screens was finished.
