@@ -23,7 +23,9 @@ const S = {
   session: loadSession(), // { code, token } of the seat we hold
   state: null, // latest view from the server
   screen: null,
-  stageKey: null,
+  screenKey: null, // which screen or game phase is showing, to tell when it changes
+  fresh: false, // true while drawing a screen for the first time: entry animations play
+  seen: new Set(), // lobby seats already shown, so only newcomers slide in
   turnKey: null,
   peeking: false,
   shuffleUntil: 0, // time the shuffle screen ends
@@ -171,24 +173,51 @@ function render() {
   banner.hidden = S.online || !inRoom || S.replaced;
   app.classList.toggle('offline', !S.online && inRoom && !S.replaced);
   const st = S.state;
-  if (S.replaced) show('replaced', replacedScreen());
-  else if (!st) S.session ? show('loading', loadingScreen()) : showHome();
-  else if (st.phase === 'lobby') show('lobby', lobbyScreen(st));
-  else if (st.phase === 'over') show('over', overScreen(st));
-  else if (st.phase === 'choose' && Date.now() < S.shuffleUntil) show('shuffle', shuffleScreen(st));
-  else show('game', gameScreen(st));
+  if (S.replaced) show('replaced', replacedScreen);
+  else if (!st) S.session ? show('loading', loadingScreen) : showHome();
+  else if (st.phase === 'lobby') show('lobby', () => lobbyScreen(st), `lobby:${st.code}`);
+  else if (st.phase === 'over') show('over', () => overScreen(st), `over:${st.code}:${st.history.length}`);
+  else if (st.phase === 'choose' && Date.now() < S.shuffleUntil) show('shuffle', () => shuffleScreen(st), `shuffle:${st.round.number}`);
+  else show('game', () => gameScreen(st), `${st.phase}:${st.round.number}`);
   keepAwake();
 }
 
-function show(name, html) {
-  app.innerHTML = html;
+// Every update redraws the screen, so entry animations only run when the screen
+// (or the game phase) is new: #app gets the "fresh" class just for that draw.
+function show(name, build, key = name) {
+  S.fresh = key !== S.screenKey;
+  S.screenKey = key;
+  app.innerHTML = build();
+  app.classList.toggle('fresh', S.fresh);
   S.screen = name;
+  if (S.fresh && name === 'game' && S.state.phase === 'result') setTimeout(countUp, 350);
 }
 
 // The home screen has text boxes, so it is drawn once and then left alone.
 function showHome() {
-  if (S.screen !== 'home') show('home', homeScreen());
+  if (S.screen !== 'home') show('home', homeScreen);
   document.getElementById('install').hidden = !S.installPrompt;
+}
+
+const calm = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+// On the result screen, totals tick up from last round's score to the new one.
+function countUp() {
+  if (calm()) return;
+  for (const el of app.querySelectorAll('[data-from]')) {
+    const from = Number(el.dataset.from);
+    const to = Number(el.textContent);
+    if (from === to) continue;
+    const start = performance.now();
+    const step = (now) => {
+      if (!el.isConnected) return;
+      const k = Math.min(1, (now - start) / 900);
+      el.textContent = Math.round(from + (to - from) * (1 - (1 - k) ** 3));
+      if (k < 1) requestAnimationFrame(step);
+    };
+    el.textContent = from;
+    requestAnimationFrame(step);
+  }
 }
 
 function esc(value) {
@@ -228,9 +257,10 @@ function homeScreen() {
   return `
   <main class="screen home">
     <header class="brand">
-      <div class="tiles" aria-hidden="true"><span class="chor">C</span><span class="police">P</span><span class="dakat">D</span><span class="babu">B</span></div>
-      <h1>CPDB</h1>
-      <p class="tagline">Chor · Police · Dakat · Babu</p>
+      <div class="floaters" aria-hidden="true"><span>👑</span><span>👮</span><span>🗡️</span><span>🦹</span></div>
+      <div class="tiles" aria-hidden="true">${['chor', 'police', 'dakat', 'babu'].map((r, i) => `<span class="${r}" style="--i:${i}">${r[0].toUpperCase()}</span>`).join('')}</div>
+      <h1 class="logo">CPDB</h1>
+      <p class="tagline"><span class="chor">Chor</span> · <span class="police">Police</span> · <span class="dakat">Dakat</span> · <span class="babu">Babu</span></p>
     </header>
     <section class="panel">
       <label class="field">Your name
@@ -282,13 +312,14 @@ function lobbyScreen(st) {
   else footer = `<p class="hint">Waiting for ${nameOf(st, st.hostId)} to start${dots()}</p>`;
   const label = missing ? `Start with ${bots} 🤖` : 'Start game';
   if (isHost) footer += `<button class="btn primary big" data-action="start"${away ? ' disabled' : ''}>${label}</button>`;
-  const seats = [0, 1, 2, 3].map((i) => seat(st, st.players[i], isHost)).join('');
+  const seats = [0, 1, 2, 3].map((i) => seat(st, st.players[i], isHost, i)).join('');
+  const letters = Array.from(st.code, (c, i) => `<span style="--i:${i}">${esc(c)}</span>`).join('');
   return `
   <main class="screen lobby">
     ${topbar('Lobby', st)}
-    <section class="panel center">
+    <section class="panel center code-card">
       <p class="eyebrow">Room code</p>
-      <p class="room-code">${esc(st.code)}</p>
+      <p class="room-code" aria-label="${esc(st.code)}">${letters}</p>
       <p class="hint">Friends tap Join and type this code.</p>
       <button class="btn" data-action="share">Share invite link</button>
     </section>
@@ -298,15 +329,19 @@ function lobbyScreen(st) {
   </main>`;
 }
 
-function seat(st, p, isHost) {
-  if (!p) return '<li class="seat empty"><span class="avatar">?</span><span class="who">Empty seat · a bot plays if nobody joins</span></li>';
+function seat(st, p, isHost, i) {
+  if (!p) return `<li class="seat empty" style="--i:${i}"><span class="avatar">?</span><span class="who">Empty seat · a bot plays if nobody joins</span></li>`;
   const tags = [];
   if (p.id === st.you) tags.push('<span class="you">you</span>');
   if (p.id === st.hostId) tags.push('<span class="tag">host</span>');
   if (!p.connected) tags.push('<span class="tag off">offline</span>');
   const remove = isHost && !p.connected ? `<button class="btn small" data-action="kick" data-id="${p.id}">Remove</button>` : '';
+  // Someone who just joined slides in; on a fresh lobby every seat does anyway.
+  const seenKey = `${st.code}:${p.id}`;
+  const isNew = !S.fresh && !S.seen.has(seenKey);
+  S.seen.add(seenKey);
   return `
-  <li class="seat${p.id === st.you ? ' me' : ''}${p.connected ? '' : ' away'}">
+  <li class="seat${p.id === st.you ? ' me' : ''}${p.connected ? '' : ' away'}${isNew ? ' new' : ''}" style="--i:${i}">
     ${avatar(p)}
     <span class="who"><span class="name">${esc(p.name)}</span>${tags.join('')}</span>
     ${remove}
@@ -315,7 +350,7 @@ function seat(st, p, isHost) {
 
 // Four face-down chits swapping places while the server's deal is "decided".
 function shuffleScreen(st) {
-  const chits = ['chor', 'police', 'dakat', 'babu'].map((role) => `<span class="${role}">?</span>`).join('');
+  const chits = ['chor', 'police', 'dakat', 'babu'].map((role, i) => `<span class="${role}" style="--i:${i}">?</span>`).join('');
   return `
   <main class="screen game">
     ${topbar(`Round ${st.round.number}`, st)}
@@ -329,14 +364,13 @@ function shuffleScreen(st) {
 
 function gameScreen(st) {
   const r = st.round;
-  const key = `${st.phase}:${r.number}`;
-  const enter = key !== S.stageKey ? ' enter' : '';
-  S.stageKey = key;
+  const turn = (st.phase === 'choose' && st.you === r.babuId) || (st.phase === 'guess' && st.you === r.policeId);
+  const mood = st.phase === 'result' ? (r.correct ? ' caught' : ' missed') : '';
   return `
-  <main class="screen game">
+  <main class="screen game ${st.phase}">
     ${topbar(`Round ${r.number}`, st)}
-    <ul class="board">${st.players.map((p) => boardRow(st, p)).join('')}</ul>
-    <section class="stage${enter}">${stage(st)}</section>
+    <ul class="board">${st.players.map((p, i) => boardRow(st, p, i)).join('')}</ul>
+    <section class="stage ${st.phase}${turn ? ' your-turn' : ''}${mood}">${stage(st)}</section>
     ${st.phase === 'result' ? '' : myChit(st)}
     <footer class="dock">${stopButton(st)}</footer>
     ${scoreSheet(st)}
@@ -344,24 +378,37 @@ function gameScreen(st) {
   </main>`;
 }
 
-function boardRow(st, p) {
+function boardRow(st, p, i) {
   const r = st.round;
   const revealed = st.phase === 'result';
   // Babu and Police are public; Chor and Dakat show as "?" until the round ends,
   // even on your own row, so nobody can read your role off your screen.
   const role = revealed ? r.roles[p.id] : p.id === r.babuId ? 'babu' : p.id === r.policeId ? 'police' : null;
+  // Whoever has to move right now glows.
+  const acting = (st.phase === 'choose' && p.id === r.babuId) || (st.phase === 'guess' && p.id === r.policeId);
+  const wanted = revealed && Object.keys(r.roles).find((id) => r.roles[id] === r.target);
   const tags = [];
   if (p.id === st.you) tags.push('<span class="you">you</span>');
   if (!p.connected) tags.push('<span class="tag off">offline</span>');
+  if (acting) tags.push(`<span class="tag acting">${st.phase === 'choose' ? 'choosing' : 'investigating'}</span>`);
   if (revealed && p.ready) tags.push('<span class="mark" title="Ready">✓</span>');
   if (p.stopVote) tags.push('<span class="mark stop" title="Voted to stop">✋</span>');
   const pts = revealed ? r.points[p.id] : null;
+  const cls = [
+    'row',
+    role && `role-${role}`,
+    p.id === st.you && 'me',
+    !p.connected && 'away',
+    acting && 'acting',
+    revealed && r.correct && p.id === wanted && 'caught',
+    revealed && p.id === r.policeId && (r.correct ? 'hero' : 'fail'),
+  ].filter(Boolean).join(' ');
   return `
-  <li class="row${p.id === st.you ? ' me' : ''}${p.connected ? '' : ' away'}">
+  <li class="${cls}" style="--i:${i}">
     ${avatar(p)}
     <span class="who"><span class="name">${esc(p.name)}</span>${tags.join('')}</span>
     ${role ? badge(role) : '<span class="badge">?</span>'}
-    <span class="score">${pts === null ? '' : `<span class="delta${pts ? '' : ' zero'}">+${pts}</span>`}${p.total}</span>
+    <span class="score">${pts === null ? '' : `<span class="delta${pts ? '' : ' zero'}">+${pts}</span>`}<b class="total"${revealed ? ` data-from="${p.total - pts}"` : ''}>${p.total}</b></span>
   </li>`;
 }
 
@@ -417,6 +464,7 @@ function stage(st) {
   const me = st.players.find((p) => p.id === st.you);
   const waiting = st.players.filter((p) => !p.ready).map((p) => esc(p.name));
   return `
+    ${r.correct ? '<div class="siren" aria-hidden="true"><i></i><i></i></div>' : ''}
     <p class="eyebrow">Babu wanted the ${ROLE[r.target].name}</p>
     <h2 class="${res.cls}">${res.head}</h2>
     <p>${res.text}</p>
@@ -450,8 +498,10 @@ function myChit(st) {
   }
   return `
   <section class="chit ${role}${S.peeking ? ' peeking' : ''}" data-peek>
-    <div class="chit-cover">🤫 Your secret chit<small>Press and hold to peek</small></div>
-    <div class="chit-face"><span class="icon">${ROLE[role].icon}</span><b>${ROLE[role].name}</b><small>${note}</small></div>
+    <div class="chit-inner">
+      <div class="chit-cover"><span class="seal">🤫</span>Your secret chit<small>Press and hold to peek</small></div>
+      <div class="chit-face"><span class="icon">${ROLE[role].icon}</span><b>${ROLE[role].name}</b><small>${note}</small></div>
+    </div>
   </section>`;
 }
 
@@ -489,21 +539,23 @@ function overScreen(st) {
   const isHost = st.hostId === st.you;
   const medals = ['🥇', '🥈', '🥉'];
   const list = ranked
-    .map((p) => {
+    .map((p, i) => {
       const rank = ranked.filter((q) => q.total > p.total).length;
       const cls = [rank === 0 && 'first', p.id === st.you && 'me'].filter(Boolean).join(' ');
-      return `<li class="${cls}"><span class="medal">${medals[rank] ?? rank + 1}</span><span class="name">${esc(p.name)}</span><span class="score">${p.total}</span></li>`;
+      return `<li class="${cls}" style="--i:${i}"><span class="medal">${medals[rank] ?? rank + 1}</span><span class="name">${esc(p.name)}</span><span class="score">${p.total}</span></li>`;
     })
     .join('');
   const rounds = st.history.length;
   const res = resultText(st);
-  const headline = winners.length > 1 ? "It's a tie!" : `${esc(winners[0].name)} wins!`;
+  const iWon = winners.length === 1 && winners[0].id === st.you;
+  const headline = winners.length > 1 ? "It's a tie!" : iWon ? 'You win! 🎉' : `${esc(winners[0].name)} wins!`;
   const summary = winners.length > 1 ? `${winners.map((w) => esc(w.name)).join(' & ')} share the top spot with ${best}` : `${best} points`;
   return `
   <main class="screen over">
+    ${S.fresh ? confetti() : ''}
     ${topbar('Game over', st)}
     <section class="panel center trophy">
-      <div class="big-icon">🏆</div>
+      <div class="big-icon"><span class="rays" aria-hidden="true"></span>🏆</div>
       <h2>${headline}</h2>
       <p>${summary} after ${rounds} round${rounds > 1 ? 's' : ''}</p>
     </section>
@@ -517,6 +569,16 @@ function overScreen(st) {
     }</footer>
     ${scoreSheet(st, true)}
   </main>`;
+}
+
+// Paper pieces in the four role colours, raining down once when the game ends.
+function confetti() {
+  const colors = ['--babu', '--police', '--dakat', '--chor', '--good'];
+  const pieces = Array.from({ length: 48 }, (_, i) => {
+    const r = (n) => (Math.random() * n).toFixed(2);
+    return `<i style="--x:${r(100)}%;--d:${r(0.9)}s;--t:${(2.4 + Math.random() * 1.8).toFixed(2)}s;--r:${r(360)}deg;--s:${(Math.random() * 80 - 40).toFixed(0)}px;--c:var(${colors[i % colors.length]})"></i>`;
+  }).join('');
+  return `<div class="confetti" aria-hidden="true">${pieces}</div>`;
 }
 
 function rules() {

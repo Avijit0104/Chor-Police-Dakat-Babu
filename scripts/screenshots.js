@@ -85,8 +85,9 @@ async function waitFor(expression, label, ms = 15000) {
 
 const click = (selector) => js(`document.querySelector(${JSON.stringify(selector)}).click()`);
 
-async function shot(name) {
-  await delay(250); // let entry animations settle
+// `settle` waits for the screen's entry animations to finish first.
+async function shot(name, settle = 900) {
+  await delay(settle);
   const { data } = await cdp('Page.captureScreenshot', { format: 'png' });
   fs.writeFileSync(path.join(OUT, `${name}.png`), Buffer.from(data, 'base64'));
   console.log(`saved ${name}.png`);
@@ -141,7 +142,7 @@ async function main() {
   await click('[data-action=start]');
   await waitFor(`S.screen === 'shuffle'`, 'shuffle');
   await js(`S.shuffleUntil = Date.now() + 60000; render()`);
-  await shot('3-shuffle');
+  await shot('3-shuffle', 450);
   await js(`S.shuffleUntil = 0; render()`);
 
   const need = new Set(['babu', 'investigating', 'chit', 'result']);
@@ -159,15 +160,15 @@ async function main() {
     } else if (await js(`S.state.phase === 'guess'`)) {
       // A bot or Rahul is the Police: this is what everyone else watches.
       await waitFor(`document.querySelector('.magnifier')`, 'investigating screen');
-      if (need.delete('investigating')) await shot('5-investigating');
+      if (need.delete('investigating')) await shot('5-investigating', 700);
       if ((role === 'chor' || role === 'dakat') && need.delete('chit')) {
         await js(`S.peeking = true; syncPeek()`);
-        await shot('6-chit');
+        await shot('6-chit', 600);
         await js(`S.peeking = false; syncPeek()`);
       }
     }
     await waitFor(`S.state.phase === 'result'`, `result ${n}`);
-    if (need.delete('result')) await shot('7-result');
+    if (need.delete('result')) await shot('7-result', 1600); // totals count up
     if (need.size) {
       await click('[data-action=ready]');
     } else {
@@ -177,7 +178,7 @@ async function main() {
     }
   }
   await waitFor(`S.state.phase === 'over'`, 'game over');
-  await shot('8-over');
+  await shot('8-over', 1600); // standings slide in, confetti still falling
   friend.close();
 }
 
