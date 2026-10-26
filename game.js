@@ -179,17 +179,18 @@ class Room {
     return this.humans().every((p) => p[flag]);
   }
 
-  // The move a bot has to make right now, if any. Bots pick at random, so they
-  // know no more than a person would. The server runs this after a short pause.
+  // The move a bot has to make right now, if any, as { role, run }. Bots pick at
+  // random, so they know no more than a person would. The server runs it after
+  // a pause that depends on the role.
   botMove() {
     if (this.phase === 'choose') {
       const babu = this.player(this.holderOf('babu'));
-      if (babu.bot) return () => this.choose(babu.id, crypto.randomInt(2) ? 'chor' : 'dakat');
+      if (babu.bot) return { role: 'babu', run: () => this.choose(babu.id, crypto.randomInt(2) ? 'chor' : 'dakat') };
     }
     if (this.phase === 'guess') {
       const police = this.player(this.holderOf('police'));
       const suspects = [this.holderOf('chor'), this.holderOf('dakat')];
-      if (police.bot) return () => this.guess(police.id, suspects[crypto.randomInt(2)]);
+      if (police.bot) return { role: 'police', run: () => this.guess(police.id, suspects[crypto.randomInt(2)]) };
     }
     return null;
   }

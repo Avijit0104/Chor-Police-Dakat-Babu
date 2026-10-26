@@ -36,7 +36,7 @@ It has to cost nothing to build, host and play.
 - **Starting:** the host can start with 1 to 4 people, as long as everyone in the lobby is connected. In the lobby, the host can remove a player who is offline.
 - **Bots (added at the owner's request):** at start, empty seats are filled with bots named `Bot 1`, `Bot 2`, `Bot 3`, skipping any name a person already uses.
   - Bots take part like players: they get chits and points and can win.
-  - A Babu bot picks Chor or Dakat at random, and a Police bot guesses one of the two at random, so bots know no more than a person would. They move after a 1.2–2.4 s pause.
+  - A Babu bot picks Chor or Dakat at random, and a Police bot guesses one of the two at random, so bots know no more than a person would. A Babu bot moves 3–4.5 s after the round starts (this includes the 0.8 s shuffle screen), and a Police bot investigates for 3.5–5.5 s. The owner asked for these longer pauses on 2026-10-26 because 1.2–2.4 s felt too fast.
   - Bots are ready for the next round straight away and never vote to stop. The stop vote and "Next round" wait only for the people.
   - Bots are always "connected", so nobody can take a bot's seat by joining with its name, and a bot never becomes host.
   - Play again removes the bots, so new friends can join; empty seats are filled again at the next start.
@@ -123,7 +123,7 @@ It has to cost nothing to build, host and play.
 - Empty rooms are deleted after 30 minutes in the lobby, or 6 hours otherwise.
 - Room limit: 2000. Message size limit: 4 KB.
 - `PORT` env variable, default 3000. On start it prints the LAN addresses phones can use.
-- Bots: after every `broadcast()`, `runBots()` checks `room.botMove()`. If a bot must move, it waits `BOT_DELAY_MS` (env variable; default a random 1.2–2.4 s), makes the move and broadcasts again. There is one timer per room.
+- Bots: after every `broadcast()`, `runBots()` checks `room.botMove()`. `botMove()` returns `{role, run}`. If a bot must move, the server waits a random pause from `BOT_PAUSE` in `server.js`: Babu 3000–4500 ms, Police 3500–5500 ms. The `BOT_DELAY_MS` env variable overrides it with a fixed pause, for tests. Then it makes the move and broadcasts again. There is one timer per room.
 
 ### Client details (`public/app.js`)
 
@@ -201,3 +201,4 @@ As of 2026-10-24.
 - **2026-10-24:** The owner set `SHUFFLE_MS` to 800.
 - **2026-10-24:** Rewrote the README for players, with 8 screenshots taken by the new `scripts/screenshots.js`. Removed the server running and hosting sections from it at the owner's request; those details stay in this file. The screenshots also confirmed the shuffle and investigating screens render correctly.
 - **2026-10-26:** Redesigned the UI with more styling and animations (see "Animations" under Client details) and the Fredoka font. `scripts/screenshots.js` now waits for entry animations before each shot. Screenshots retaken; `npm test` passes.
+- **2026-10-26:** Slowed the bots down at the owner's request: Babu bots now take 3–4.5 s and Police bots 3.5–5.5 s, instead of 1.2–2.4 s for both. Checked with a timed local game; `npm test` passes.

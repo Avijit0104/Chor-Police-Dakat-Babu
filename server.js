@@ -14,8 +14,16 @@ const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const CODE_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // no I or O: they look like 1 and 0
 const MAX_ROOMS = 2000;
-// How long a bot "thinks" before moving. Tests set BOT_DELAY_MS to keep it quick.
-const botDelay = () => (process.env.BOT_DELAY_MS ? Number(process.env.BOT_DELAY_MS) : 1200 + crypto.randomInt(1200));
+// How long a bot "thinks" before moving, in ms: [shortest, longest]. A Babu bot's
+// pause starts with the round, so it includes the phones' 0.8 s shuffle screen;
+// a Police bot gets longer so everyone can watch the investigation.
+// Tests set BOT_DELAY_MS to keep it quick.
+const BOT_PAUSE = { babu: [3000, 4500], police: [3500, 5500] };
+function botDelay(role) {
+  if (process.env.BOT_DELAY_MS) return Number(process.env.BOT_DELAY_MS);
+  const [min, max] = BOT_PAUSE[role];
+  return min + crypto.randomInt(max - min + 1);
+}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -55,16 +63,17 @@ function broadcast(entry) {
 
 // If it is a bot's turn, make its move after a pause, then tell everyone.
 function runBots(entry) {
-  if (entry.botTimer || !entry.room.botMove()) return;
+  const move = entry.room.botMove();
+  if (entry.botTimer || !move) return;
   entry.botTimer = setTimeout(() => {
     entry.botTimer = null;
     try {
-      entry.room.botMove()?.();
+      entry.room.botMove()?.run();
     } catch (err) {
       console.error(err);
     }
     broadcast(entry);
-  }, botDelay());
+  }, botDelay(move.role));
 }
 
 function attach(ws, entry, player) {
