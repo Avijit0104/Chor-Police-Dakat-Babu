@@ -164,8 +164,9 @@ class Room {
     r.points = {};
     for (const p of this.players) {
       const role = r.roles[p.id];
-      const lost = (role === 'police' && !r.correct) || (r.correct && p.id === wantedId);
-      r.points[p.id] = lost ? 0 : POINTS[role];
+      // A caught Chor or Dakat loses their chit's points; a wrong Police loses 900.
+      const penalised = (role === 'police' && !r.correct) || (r.correct && p.id === wantedId);
+      r.points[p.id] = penalised ? -POINTS[role] : POINTS[role];
       p.total += r.points[p.id];
       if (p.bot) p.ready = true;
     }

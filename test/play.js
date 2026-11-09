@@ -128,7 +128,7 @@ async function playRound(bots, number, target, correct, totals, beforeGuess) {
   byRole.police.send({ type: 'guess', playerId: (correct ? byRole[target] : byRole[other]).id });
   await all(bots, (b) => ['result', 'over'].includes(b.state.phase) && b.state.round.points, `result ${number}`);
 
-  const want = { babu: 1200, police: correct ? 900 : 0, [target]: correct ? 0 : POINTS[target], [other]: POINTS[other] };
+  const want = { babu: 1200, police: correct ? 900 : -900, [target]: correct ? -POINTS[target] : POINTS[target], [other]: POINTS[other] };
   for (const [role, b] of Object.entries(byRole)) {
     assert.equal(bots[0].state.round.points[b.id], want[role], `round ${number}: ${role} points`);
     assert.equal(bots[0].state.round.roles[b.id], role, 'roles are revealed after the round');
@@ -260,8 +260,8 @@ function expectedPoints(r) {
   assert.equal(r.correct, correct);
   const want = {};
   for (const [id, role] of Object.entries(r.roles)) {
-    if (role === 'police') want[id] = correct ? 900 : 0;
-    else want[id] = correct && id === wanted ? 0 : POINTS[role];
+    if (role === 'police') want[id] = correct ? 900 : -900;
+    else want[id] = correct && id === wanted ? -POINTS[role] : POINTS[role];
   }
   return want;
 }

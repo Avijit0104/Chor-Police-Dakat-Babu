@@ -2,9 +2,9 @@
 
 The classic chit game **Chor, Police, Dakat, Babu**, made for phones. Four players, everyone on their own phone, no paper chits needed. Short of friends? Bots fill the empty seats.
 
-### ▶ Play now: **https://chor-police-dakat-babu.onrender.com**
+### ▶ Play now: **https://cpdb.avibose000.workers.dev/**
 
-Free, nothing to download, works in any phone browser. If nobody has played for a while, the first load can take up to a minute while the server wakes up.
+Free, nothing to download, works in any phone browser.
 
 <p align="center">
   <img src="docs/screenshots/1-home.png" width="200" alt="Start screen">
@@ -41,8 +41,8 @@ Free, nothing to download, works in any phone browser. If nobody has played for 
 2. **The Babu chooses.** The Babu gets 1200 points for free and picks who the Police must find: the Chor or the Dakat. Everyone sees the choice, like "Babu selected Chor".
 3. **The Police investigates.** The Police picks which of the two hidden players has that chit. Everyone else watches the 🔍 while the Police decides.
 4. **The result.**
-   - **Right guess:** the Police gets 900, the caught player gets 0, and the other hidden player keeps their points.
-   - **Wrong guess:** the Police gets 0, and the Chor and the Dakat both keep their points.
+   - **Right guess:** the Police gets +900, the caught player loses their chit's points (**-300** for the Chor, **-600** for the Dakat), and the other hidden player keeps their points.
+   - **Wrong guess:** the Police gets **-900**, and the Chor and the Dakat both keep their points.
 5. When everyone taps **Next round**, the next shuffle starts. Points add up round after round.
 
 **Your secret chit:** if you're the Chor or the Dakat, your chit stays covered so nobody can read it off your screen. Press and hold it to peek.

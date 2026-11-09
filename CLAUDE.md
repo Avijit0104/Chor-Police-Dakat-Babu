@@ -22,8 +22,9 @@ It has to cost nothing to build, host and play.
 - Everyone sees who is Babu and who is Police. Chor and Dakat are known only to the player holding them.
 - The Babu selects Chor or Dakat, and everyone is told, worded like "Babu selected Chor".
 - The Police guesses which of the two hidden players holds the selected role.
-  - **Right guess:** Police gets 900, the caught player gets 0, the unselected one keeps their points.
-  - **Wrong guess:** Police gets 0, Chor and Dakat both get their points.
+  - **Right guess:** Police gets +900, the caught player gets minus their chit's points (Chor -300, Dakat -600), the unselected one keeps their points.
+  - **Wrong guess:** Police gets -900, Chor and Dakat both get their points.
+  - Totals can go negative. (Changed 2026-11-09 at the owner's request; before, the loser just got 0.)
 - Rounds repeat. When all 4 players vote to stop, the game ends and the highest total wins.
 - With fewer than 4 people, bots fill the empty seats (details below).
 
@@ -57,6 +58,7 @@ It has to cost nothing to build, host and play.
   - Catches: it sleeps after 15 minutes idle and takes about a minute to wake. Rooms live in memory and are lost when it sleeps or restarts.
   - The client fetches `/healthz` every 4 minutes during a game so it doesn't sleep mid-game.
   - Quick alternative: `cloudflared tunnel --url http://localhost:3000` gives a temporary `https` link while the PC is on.
+- **Live link is now `https://cpdb.avibose000.workers.dev/` (Cloudflare), set in the README on 2026-11-09.** The Render link still exists but is no longer advertised.
 - **Moving to Cloudflare Workers (free plan, no card), 2026-11-09.** Part of the owner's "Friend's Night" game hub (repo `Avijit0104/friends_night`). CPDB is the pilot; Ram Shaayam Jadu Madhu and Vault Rush follow.
   - Why: no cold start (Render takes a minute to wake), rooms survive deploys and restarts, and no 750-hour limit. Oracle Cloud was the first choice but needs a card the owner doesn't have.
   - `worker.mjs` + `wrangler.jsonc`: the Worker serves `public/` as static files; `/ws` goes to one Durable Object (`Game`, named `cpdb`, location hint `apac`) that runs every room with the unchanged `game.js`. `/healthz` answers `ok` from the Worker.
@@ -214,3 +216,4 @@ As of 2026-10-24.
 - **2026-10-26:** Redesigned the UI with more styling and animations (see "Animations" under Client details) and the Fredoka font. `scripts/screenshots.js` now waits for entry animations before each shot. Screenshots retaken; `npm test` passes.
 - **2026-10-26:** Slowed the bots down at the owner's request: Babu bots now take 3–4.5 s and Police bots 3.5–5.5 s, instead of 1.2–2.4 s for both. Checked with a timed local game; `npm test` passes.
 - **2026-11-09:** Added the Cloudflare Workers version (`worker.mjs`, `wrangler.jsonc`) as the pilot for the Friend's Night hub. The client now sends a `ping` every 20 s and ignores `pong`. `test/play.js` accepts `TEST_URL` to test a running server; all checks pass on Node and on `wrangler dev`.
+- **2026-11-09:** README play link changed to `https://cpdb.avibose000.workers.dev/` (and the "server may take a minute to wake" sentence removed). Scoring changed: a caught Chor/Dakat gets -300/-600 and a Police who guesses wrong gets -900. Client shows negative deltas in red, and the result, hint and chit texts were reworded. `npm test` passes on Node (not rerun on `wrangler dev`). README screenshots not retaken yet; the result screenshot still shows the old "gets 0" wording.

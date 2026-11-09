@@ -450,7 +450,7 @@ input:focus { outline: none; border-color: var(--police); box-shadow: 0 0 0 4px 
 }
 .score b { font-weight: 700; }
 .delta { font-size: 12px; font-weight: 700; color: var(--good); }
-.delta.zero { color: var(--bad); }
+.delta.neg { color: var(--bad); }
 
 /* ---------- the stage: what is happening this round ---------- */
 

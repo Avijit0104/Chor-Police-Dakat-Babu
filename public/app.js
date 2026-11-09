@@ -411,7 +411,7 @@ function boardRow(st, p, i) {
     ${avatar(p)}
     <span class="who"><span class="name">${esc(p.name)}</span>${tags.join('')}</span>
     ${role ? badge(role) : '<span class="badge">?</span>'}
-    <span class="score">${pts === null ? '' : `<span class="delta${pts ? '' : ' zero'}">+${pts}</span>`}<b class="total"${revealed ? ` data-from="${p.total - pts}"` : ''}>${p.total}</b></span>
+    <span class="score">${pts === null ? '' : `<span class="delta${pts < 0 ? ' neg' : ''}">${pts > 0 ? '+' : ''}${pts}</span>`}<b class="total"${revealed ? ` data-from="${p.total - pts}"` : ''}>${p.total}</b></span>
   </li>`;
 }
 
@@ -452,7 +452,7 @@ function stage(st) {
       return `${head}
         <h2>🔍 Investigate: who is the ${target.name}?</h2>
         <div class="choices">${suspects.map((p) => `<button class="btn suspect" data-action="guess" data-id="${p.id}">${esc(p.name)}</button>`).join('')}</div>
-        <p class="hint">Right guess: you get 900. Wrong guess: you get 0.</p>`;
+        <p class="hint">Right guess: you get +900. Wrong guess: you get -900.</p>`;
     }
     // Everyone else watches the Police investigate the two hidden players.
     const chip = (p) => `<span class="suspect-chip">${p.id === st.you ? 'You' : esc(p.name)}</span>`;
@@ -482,12 +482,12 @@ function resultText(st) {
   const police = nameOf(st, r.policeId);
   const wanted = nameOf(st, Object.keys(r.roles).find((id) => r.roles[id] === r.target));
   if (r.correct) {
-    return { head: '🚨 Caught!', cls: 'good', text: `${police} found the ${target.name}. <b>${wanted}</b> gets 0 this round.` };
+    return { head: '🚨 Caught!', cls: 'good', text: `${police} found the ${target.name}. <b>${wanted}</b> loses ${ROLE[r.target].points} this round.` };
   }
   return {
     head: '💨 Wrong guess!',
     cls: 'bad',
-    text: `${police} picked <b>${nameOf(st, r.guessId)}</b>, who was the ${other.name}. The ${target.name} was <b>${wanted}</b>. Police gets 0.`,
+    text: `${police} picked <b>${nameOf(st, r.guessId)}</b>, who was the ${other.name}. The ${target.name} was <b>${wanted}</b>. Police loses 900.`,
   };
 }
 
@@ -495,7 +495,7 @@ function myChit(st) {
   const r = st.round;
   const role = r.yourRole;
   if (role !== 'chor' && role !== 'dakat') return '';
-  let note = `${ROLE[role].points} points, unless the Police catches you`;
+  let note = `${ROLE[role].points} points, but -${ROLE[role].points} if the Police catches you`;
   if (st.phase === 'guess') {
     note = r.target === role ? 'The Police is hunting you. Poker face! 😐' : `You're safe this round: ${ROLE[role].points} points`;
   }
@@ -592,8 +592,8 @@ function rules() {
       <li>Everyone sees who is Babu and who is Police. Chor and Dakat stay secret.</li>
       <li>The Babu gets 1200 for free and picks who the Police must find: the Chor or the Dakat.</li>
       <li>The Police guesses which of the two hidden players has that chit.</li>
-      <li>Right guess: Police gets 900, the caught player gets 0, the other keeps their points.</li>
-      <li>Wrong guess: Police gets 0, Chor and Dakat both keep their points.</li>
+      <li>Right guess: Police gets +900, the caught player loses their chit's points (Chor -300, Dakat -600), the other keeps theirs.</li>
+      <li>Wrong guess: Police gets -900, Chor and Dakat both keep their points.</li>
       <li>Play as many rounds as you like. When all the players (not the bots) vote to stop, the highest total wins.</li>
     </ol>`);
 }
