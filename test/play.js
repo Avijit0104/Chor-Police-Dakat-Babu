@@ -10,7 +10,9 @@ const { spawn } = require('node:child_process');
 const { POINTS } = require('../game');
 
 const PORT = 3999;
-const URL = `ws://localhost:${PORT}/ws`;
+// TEST_URL runs the same checks against a server that's already running, e.g. the Cloudflare version:
+//   npx wrangler dev --var BOT_DELAY_MS:20   then   TEST_URL=ws://localhost:8787/ws npm test
+const URL = process.env.TEST_URL || `ws://localhost:${PORT}/ws`;
 
 class Bot {
   constructor(name) {
@@ -329,19 +331,25 @@ async function botGame(names) {
   console.log(`${names.join(' + ')} + ${botNames.join(' + ')}: ${rounds} rounds ok`);
 }
 
-const server = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], {
-  env: { ...process.env, PORT: String(PORT), BOT_DELAY_MS: '20' },
-  stdio: ['ignore', 'pipe', 'inherit'],
-});
-server.stdout.once('data', () => {
+function run(stop) {
   main()
     .then(() => {
-      server.kill();
+      stop();
       process.exit(0);
     })
     .catch((err) => {
       console.error(err);
-      server.kill();
+      stop();
       process.exit(1);
     });
-});
+}
+
+if (process.env.TEST_URL) {
+  run(() => {});
+} else {
+  const server = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], {
+    env: { ...process.env, PORT: String(PORT), BOT_DELAY_MS: '20' },
+    stdio: ['ignore', 'pipe', 'inherit'],
+  });
+  server.stdout.once('data', () => run(() => server.kill()));
+}

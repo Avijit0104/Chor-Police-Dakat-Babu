@@ -87,7 +87,10 @@ function connect() {
     for (const msg of S.outbox.splice(0)) ws.send(JSON.stringify(msg));
     render();
   };
-  ws.onmessage = (e) => receive(JSON.parse(e.data));
+  ws.onmessage = (e) => {
+    if (e.data === 'pong') return; // answer to our keep-alive ping
+    receive(JSON.parse(e.data));
+  };
   ws.onclose = () => {
     if (S.ws !== ws) return;
     S.ws = null;
@@ -775,6 +778,12 @@ document.addEventListener('visibilitychange', () => {
 setInterval(() => {
   if (S.state) fetch('/healthz', { cache: 'no-store' }).catch(() => {});
 }, 4 * 60_000);
+
+// Keep-alive ping. On Cloudflare the server only counts a connection as live while these arrive,
+// and they're answered with "pong" without waking the server. The Node server just ignores them.
+setInterval(() => {
+  if (S.ws?.readyState === WebSocket.OPEN) S.ws.send('ping');
+}, 20_000);
 
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();

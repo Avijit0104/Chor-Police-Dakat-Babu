@@ -1,0 +1,17 @@
+// Cloudflare Workers config (free plan). See CLAUDE.md → "Hosting".
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cpdb",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-11-01",
+  // game.js uses Node's crypto (randomInt, randomUUID)
+  "compatibility_flags": ["nodejs_compat"],
+  // public/ is served as static files; only /ws and /healthz reach worker.mjs
+  "assets": { "directory": "./public" },
+  "durable_objects": {
+    "bindings": [{ "name": "GAME", "class_name": "Game" }]
+  },
+  // Free plan: Durable Objects must use SQLite storage
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Game"] }],
+  "observability": { "enabled": true }
+}
