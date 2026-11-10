@@ -15,7 +15,7 @@ Free, nothing to download, works in any phone browser.
 <p align="center">
   <img src="docs/screenshots/5-investigating.png" width="200" alt="Everyone watching the Police investigate">
   <img src="docs/screenshots/6-chit.png" width="200" alt="Peeking at your secret chit">
-  <img src="docs/screenshots/7-result.png" width="200" alt="Round result: the Police caught the Dakat">
+  <img src="docs/screenshots/7-result.png" width="200" alt="Round result: the Police guessed wrong and loses 900">
   <img src="docs/screenshots/8-over.png" width="200" alt="Game over with the final standings">
 </p>
 
