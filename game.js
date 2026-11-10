@@ -5,7 +5,7 @@
 
 const crypto = require('crypto');
 
-const POINTS = { babu: 1200, police: 900, dakat: 600, chor: 300 };
+const POINTS = { babu: 1200, police: 900, dakat: 600, chor: 400 };
 const ROLES = Object.keys(POINTS);
 const SEATS = 4;
 const NAME_MAX = 16;

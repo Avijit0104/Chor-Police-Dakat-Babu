@@ -33,7 +33,7 @@ Free, nothing to download, works in any phone browser.
 | 👑 Babu | 1200 | Everyone |
 | 👮 Police | 900 | Everyone |
 | 🗡️ Dakat | 600 | Only the player holding it |
-| 🦹 Chor | 300 | Only the player holding it |
+| 🦹 Chor | 400 | Only the player holding it |
 
 ## How a round goes
 
@@ -41,7 +41,7 @@ Free, nothing to download, works in any phone browser.
 2. **The Babu chooses.** The Babu gets 1200 points for free and picks who the Police must find: the Chor or the Dakat. Everyone sees the choice, like "Babu selected Chor".
 3. **The Police investigates.** The Police picks which of the two hidden players has that chit. Everyone else watches the 🔍 while the Police decides.
 4. **The result.**
-   - **Right guess:** the Police gets +900, the caught player loses their chit's points (**-300** for the Chor, **-600** for the Dakat), and the other hidden player keeps their points.
+   - **Right guess:** the Police gets +900, the caught player loses their chit's points (**-400** for the Chor, **-600** for the Dakat), and the other hidden player keeps their points.
    - **Wrong guess:** the Police gets **-900**, and the Chor and the Dakat both keep their points.
 5. When everyone taps **Next round**, the next shuffle starts. Points add up round after round.
 

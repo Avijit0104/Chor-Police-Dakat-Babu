@@ -17,12 +17,12 @@ It has to cost nothing to build, host and play.
   - Babu 1200
   - Police 900
   - Dakat 600
-  - Chor 300
+  - Chor 400 (was 300 until 2026-11-10)
 - The Babu always gets 1200 points.
 - Everyone sees who is Babu and who is Police. Chor and Dakat are known only to the player holding them.
 - The Babu selects Chor or Dakat, and everyone is told, worded like "Babu selected Chor".
 - The Police guesses which of the two hidden players holds the selected role.
-  - **Right guess:** Police gets +900, the caught player gets minus their chit's points (Chor -300, Dakat -600), the unselected one keeps their points.
+  - **Right guess:** Police gets +900, the caught player gets minus their chit's points (Chor -400, Dakat -600), the unselected one keeps their points.
   - **Wrong guess:** Police gets -900, Chor and Dakat both get their points.
   - Totals can go negative. (Changed 2026-11-09 at the owner's request; before, the loser just got 0.)
 - Rounds repeat. When all 4 players vote to stop, the game ends and the highest total wins.
@@ -217,3 +217,4 @@ As of 2026-10-24.
 - **2026-10-26:** Slowed the bots down at the owner's request: Babu bots now take 3–4.5 s and Police bots 3.5–5.5 s, instead of 1.2–2.4 s for both. Checked with a timed local game; `npm test` passes.
 - **2026-11-09:** Added the Cloudflare Workers version (`worker.mjs`, `wrangler.jsonc`) as the pilot for the Friend's Night hub. The client now sends a `ping` every 20 s and ignores `pong`. `test/play.js` accepts `TEST_URL` to test a running server; all checks pass on Node and on `wrangler dev`.
 - **2026-11-09:** README play link changed to `https://cpdb.avibose000.workers.dev/` (and the "server may take a minute to wake" sentence removed). Scoring changed: a caught Chor/Dakat gets -300/-600 and a Police who guesses wrong gets -900. Client shows negative deltas in red, and the result, hint and chit texts were reworded. `npm test` passes on Node (not rerun on `wrangler dev`). README screenshots not retaken yet; the result screenshot still shows the old "gets 0" wording.
+- **2026-11-10:** Chor chit changed from 300 to 400 at the owner's request (caught Chor now gets -400). Pushed the unpushed 2026-11-09 commit, so the README on GitHub now shows the Cloudflare link instead of Render. `npm test` passes on Node and on `wrangler dev`; deployed to Cloudflare. README screenshots still not retaken.

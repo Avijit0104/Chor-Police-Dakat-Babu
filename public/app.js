@@ -4,7 +4,7 @@ const ROLE = {
   babu: { name: 'Babu', icon: '👑', points: 1200 },
   police: { name: 'Police', icon: '👮', points: 900 },
   dakat: { name: 'Dakat', icon: '🗡️', points: 600 },
-  chor: { name: 'Chor', icon: '🦹', points: 300 },
+  chor: { name: 'Chor', icon: '🦹', points: 400 },
 };
 
 // How long the "shuffling the chits" screen shows before each round.
@@ -588,11 +588,11 @@ function rules() {
   return details('rules', 'How to play', `
     <ol>
       <li>4 players. Fewer than 4 of you? Bots 🤖 fill the empty seats.</li>
-      <li>Every round each player gets a random chit: 👑 Babu 1200 · 👮 Police 900 · 🗡️ Dakat 600 · 🦹 Chor 300.</li>
+      <li>Every round each player gets a random chit: 👑 Babu 1200 · 👮 Police 900 · 🗡️ Dakat 600 · 🦹 Chor 400.</li>
       <li>Everyone sees who is Babu and who is Police. Chor and Dakat stay secret.</li>
       <li>The Babu gets 1200 for free and picks who the Police must find: the Chor or the Dakat.</li>
       <li>The Police guesses which of the two hidden players has that chit.</li>
-      <li>Right guess: Police gets +900, the caught player loses their chit's points (Chor -300, Dakat -600), the other keeps theirs.</li>
+      <li>Right guess: Police gets +900, the caught player loses their chit's points (Chor -400, Dakat -600), the other keeps theirs.</li>
       <li>Wrong guess: Police gets -900, Chor and Dakat both keep their points.</li>
       <li>Play as many rounds as you like. When all the players (not the bots) vote to stop, the highest total wins.</li>
     </ol>`);
